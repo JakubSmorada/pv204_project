@@ -16,6 +16,11 @@ class MongoDB:
         mongodb_url = os.getenv("MONGODB_URL")
         db_name = os.getenv("DB_NAME")
 
+        if not mongodb_url:
+            raise ValueError("MONGODB_URL environment variable is not set")
+        if not db_name:
+            raise ValueError("DB_NAME environment variable is not set")
+
         # Validate environment variables
         if not mongodb_url:
             raise ValueError("MONGODB_URL environment variable is not set")

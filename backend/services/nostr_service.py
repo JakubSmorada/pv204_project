@@ -212,9 +212,17 @@ class NostrService:
             self.is_connected = False
             print("Disconnected from Nostr relays")
 
+# load env variables
+private_key_hex = os.getenv("NOSTR_PRIVATE_KEY")
+relays = os.getenv("NOSTR_RELAYS", "ws://localhost:8080").split(",")
+
+if not private_key_hex:
+    raise ValueError("NOSTR_PRIVATE_KEY environment variable is not set")
+if not relays:
+    raise ValueError("NOSTR_RELAYS environment variable is not set")
 
 # Create a singleton instance
 nostr_service = NostrService(
-    private_key_hex=os.getenv("NOSTR_PRIVATE_KEY"),
-    relays=os.getenv("NOSTR_RELAYS", "ws://localhost:8080").split(",")
+    private_key_hex=private_key_hex,
+    relays=relays,
 )

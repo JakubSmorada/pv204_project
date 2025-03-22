@@ -4,19 +4,23 @@ import os
 
 load_dotenv()
 
-API_KEY = os.getenv("MAILERSEND_API_KEY")
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-
 # code of function is copied from mailersend documentation https://developers.mailersend.com/api/v1/email.html?_gl=1*1v9az2u*_gcl_aw*R0NMLjE3NDI0MTc4MTQuQ2owS0NRancxdW0tQmhEdEFSSXNBQmpVNXg2N3BPZXJCRmUtM2pYa1hzVXlIMmVsX3dpUUkxVEVCeFlUUWZ0bVlMMjhvQ2RnNkJOb3JpVWFBbFZuRUFMd193Y0I.*_gcl_au*MTczMzU5MzkwNS4xNzQyNDE1MDE2
 def send_verification_email(recipient_email, code):
-    mailer = emails.NewEmail(API_KEY)
+    api_key = os.getenv("MAILERSEND_API_KEY")
+    sender_email = os.getenv("SENDER_EMAIL")
+    if not api_key:
+        raise ValueError("MAILERSEND_API_KEY environment variable is not set")
+    if not sender_email:
+        raise ValueError("SENDER_EMAIL environment variable is not set")
+
+    mailer = emails.NewEmail(api_key)
 
     # define an empty dict to populate with mail values
     mail_body = {}
 
     mail_from = {
         "name": "MarketplaceNostr",
-        "email": SENDER_EMAIL,
+        "email": sender_email,
     }
 
     recipients = [
