@@ -3,11 +3,9 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-import secrets 
-import hashlib
 
 from database import mongodb
-from routers import listings
+from routers import listings, reviews
 from services.nostr_service import nostr_service
 from mail import send_verification_email, generate_verification_code_str
 
@@ -55,6 +53,7 @@ app.add_middleware(
 )
 
 app.include_router(listings.router)
+app.include_router(reviews.router)
 
 # Create a data model
 class User(BaseModel):
