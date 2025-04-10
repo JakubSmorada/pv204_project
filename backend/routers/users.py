@@ -1,13 +1,33 @@
+import secrets
+
 from fastapi import APIRouter, HTTPException
-from models import User
+from models.challenge import Challenge
+from models.user import User
 from database import mongodb
+from utils.pow import ProofOfWork
 
 router = APIRouter(
     prefix="/users",
     tags=["users"],
 )
 
-@router.post("/users/", response_model=User)
+# Proof of Work difficulty level, e. g. how many leading zeros are required in the hash
+# 5 is somehow very
+POW_DIFFICULTY = 4
+
+
+@router.get("/challenge")
+async def get_challenge():
+    random_string = secrets.token_hex(16)
+    difficulty = POW_DIFFICULTY
+
+    return Challenge(
+        challenge=random_string,
+        difficulty=difficulty,
+        target=ProofOfWork.get_target(difficulty)
+    )
+
+@router.post("/register", response_model=User)
 async def create_user(user: User):
     try:
         existing_user = await mongodb.db.users.find_one({"$or": [
@@ -17,8 +37,10 @@ async def create_user(user: User):
         if existing_user:
             raise HTTPException(status_code=400, detail="User already registered.")
 
-
+        # start creating the user only if the PoW is valid
         user_dict = user.dict()
+        if not ProofOfWork.verify_proof(user_dict, POW_DIFFICULTY):
+            raise HTTPException(status_code=400, detail="Invalid proof of work. Got: " + str(user_dict))
 
         result = await mongodb.db.users.insert_one(user_dict)
 
@@ -32,7 +54,7 @@ async def create_user(user: User):
 
 
 # Get all users endpoint
-@router.get("/users/")
+@router.get("/")
 async def get_users():
     try:
         users = []
