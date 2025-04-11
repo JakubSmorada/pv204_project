@@ -4,8 +4,8 @@ from typing import Optional
 class User(BaseModel):
     username: str
     password: str
-    nonce: str
-    hash: str
+    nonce: Optional[str] = None
+    hash: Optional[str] = None
     active: bool = False
 
     def to_db(self):
