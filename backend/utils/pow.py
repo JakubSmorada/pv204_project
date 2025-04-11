@@ -17,16 +17,15 @@ class ProofOfWork:
         return '0' * difficulty
     
     @staticmethod
-    def verify_proof(data: Dict[str, Any], difficulty: int) -> bool:
+    def verify_proof(data: Dict[str, Any], difficulty: int, challenge: str) -> bool:
         if "nonce" not in data or "hash" not in data:
             return False
             
-        verify_data = data.copy()
-        del verify_data["hash"]
+        
+        verify_data = f"{challenge}{data['nonce']}"
             
-        data_string = json.dumps(verify_data, sort_keys=True)
-        current_hash = hashlib.sha256(data_string.encode()).hexdigest()
-        print(current_hash)
+        print("Verifying PoW with data:", verify_data)
+        current_hash = hashlib.sha256(verify_data.encode()).hexdigest()
         
         target = ProofOfWork.get_target(difficulty)
         

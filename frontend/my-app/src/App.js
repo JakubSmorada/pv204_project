@@ -1,33 +1,14 @@
-import logo from './logo.svg';
+// src/App.js
+import React from 'react';
 import './App.css';
+import Register from './components/Register';
 
 function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Ayou lighting network test!!
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-        <br />
-        <br />
-        <br />
-        <button
-            onClick={() => {
-              // OpenNode payment request logic here
-              console.log('OpenNode payment button clicked');
-            }}
-          >
-            Pay with OpenNode
-          </button>
+        <h1>User Registration with PoW</h1>
+        <Register />
       </header>
     </div>
   );
