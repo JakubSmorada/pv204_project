@@ -41,17 +41,7 @@ async def create_invoice(seller_ln_address: str, amount: int, description: str):
 
         new_invoice = await invoice_service.create_invoice(seller_ln_address, amount, description)
 
-        invoice_data = Invoice(
-            type="zap",
-            invoice=new_invoice['invoice'],
-            description=new_invoice['description'],
-            payment_hash=new_invoice['payment_hash'],
-            amount=new_invoice['amount'],
-            fees_paid=new_invoice['fees_paid'],
-            created_at=datetime.now().timestamp()
-        )
-
-        return invoice_data
+        return new_invoice['invoice']
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating zap invoice: {e}")
 
@@ -62,14 +52,19 @@ async def check_invoice_status(nwc_string:str,invoicestr: str):
     result = await invoice_service.check_invoice_status(nwc_string,invoicestr)
     return result
 
-@router.post("/try_to_pay_invoice/")
-async def try_to_pay_invoice(nwc_buyer_string:str,invoicestr: str):
-    """Try to pay an LN invoice."""
-    result = await invoice_service.try_to_pay_invoice(nwc_buyer_string,invoicestr)
-    return result
-
-@router.get("/check_payment/")
-async def check_payment(nwc_buyer_string:str,invoicestr: str):
-    """Verify LN payment status."""
+#@router.post("/try_to_pay_invoice/")
+#async def try_to_pay_invoice(nwc_buyer_string:str,invoicestr: str):
+#    """Try to pay an LN invoice. - DEBUG ONLY NOW"""
+#    result = await invoice_service.try_to_pay_invoice(nwc_buyer_string,invoicestr)
+#    return result
+#
+#@router.get("/check_payment/")
+#async def check_payment(nwc_buyer_string:str,invoicestr: str):
+#    """Verify LN payment status. - DEBUGGING ONLY NOW"""
+#    result = await invoice_service.check_payment(nwc_buyer_string,invoicestr)
+#    return result
+@router.get("/pay_invoice/")
+async def pay_invoice(nwc_buyer_string:str,invoicestr:str):
+    await invoice_service.try_to_pay_invoice(nwc_buyer_string, invoicestr)
     result = await invoice_service.check_payment(nwc_buyer_string,invoicestr)
     return result

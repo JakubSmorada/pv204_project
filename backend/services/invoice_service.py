@@ -20,7 +20,10 @@ class InvoiceService:
 
     collection_name = "invoices"
     async def get_nwc_info(self,nwc_string: str) -> Any:
-        return processNWCstring(nwc_string)
+        try:
+            return processNWCstring(nwc_string)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error processing NWC string: {e}")
 
     async def get_lnurl_info(self, lightning_address: str) -> dict:
         """Resolve a Nostr Lightning Address to its LNURL-pay endpoint"""
@@ -40,7 +43,7 @@ class InvoiceService:
             lnurl_info = await self.get_lnurl_info(lightning_address)
             callback_url = lnurl_info["callback"]
             params = {
-                "amount": amount_sats * 1000,
+                "amount": amount_sats * 1000, #in milisats
             }
             if comment:
                 params["comment"] = comment
@@ -65,25 +68,34 @@ class InvoiceService:
         except Exception as e:
             raise RuntimeError(f"Failed to create an invoice: {e}")
 
-    async def check_invoice_status(self,nwc_string,invoicestr) -> Invoice:
-        nwc_info = processNWCstring(nwc_string)
-        nwc_info['relay'] = urllib.parse.unquote(nwc_info['relay'])
-        result = checkInvoice(nwc_info, invoicestr)
-        return result
+    async def check_invoice_status(self,nwc_string, invoicestr) -> Invoice:
+        try:
+            nwc_info = processNWCstring(nwc_string)
+            nwc_info['relay'] = urllib.parse.unquote(nwc_info['relay'])
+            result = checkInvoice(nwc_info, invoicestr)
+            return result
+        except Exception as e:
+            raise RuntimeError(f"Failed to check invoice: {e}")
 
     async def try_to_pay_invoice(self,nwc_buyer_string, invoicestr) -> Invoice:
-        nwc_info = processNWCstring(nwc_buyer_string)
-        nwc_info['relay'] = urllib.parse.unquote(nwc_info['relay'])
-        result = tryToPayInvoice(nwc_info, invoicestr)
-        return result
+        try:
+            nwc_info = processNWCstring(nwc_buyer_string)
+            nwc_info['relay'] = urllib.parse.unquote(nwc_info['relay'])
+            result = tryToPayInvoice(nwc_info, invoicestr)
+            return result
+        except Exception as e:
+            raise RuntimeError(f"Failed to try to pay invoice: {e}")
 
     async def check_payment(self, nwc_buyer_string, invoicestr) -> bool:
-        result = await self.check_invoice_status(nwc_buyer_string, invoicestr)
-        return (
-                result and
-                "result" in result and
-                result["result"].get("settled_at") is not None
-        )
+        try:
+            result = await self.check_invoice_status(nwc_buyer_string, invoicestr)
+            return (
+                    result and
+                    "result" in result and
+                    result["result"].get("settled_at") is not None
+            )
+        except Exception as e:
+            raise RuntimeError(f"Failed to check payment: {e}")
 
 
 invoice_service = InvoiceService()
