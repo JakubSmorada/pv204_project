@@ -20,8 +20,12 @@ class ReviewService:
             raise ValueError("Rating must be an integer between 1 and 5")
         
         review = {
+            "transaction_id": review_data.transaction_id,
             "seller_pubkey": pop.seller_pubkey,
-            "verified": True
+            "buyer_pubkey": buyer_pubkey,
+            "rating": review_data.rating,
+            "comment": review_data.comment,
+            "verified": True 
         }
         
         result = await mongodb.reviews.insert_one(review)

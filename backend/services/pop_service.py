@@ -4,14 +4,26 @@ from uuid import UUID
 import json
 from models.pop import ProofOfPurchase
 from database import mongodb
+from ecdsa import SigningKey, VerifyingKey, BadSignatureError
+from ecdsa.curves import SECP256k1
+import hashlib
+import base64
 
 def create_signature(private_key: str, message: str) -> str:
-    # todo
-    return "abcdefgh"
+    sk = SigningKey.from_string(bytes.fromhex(private_key), curve=SECP256k1)
+    message_hash = hashlib.sha256(message.encode('utf-8')).digest()
+    signature = sk.sign(message_hash)
+    return base64.b64encode(signature).decode('utf-8')
+
 
 def verify_signature(public_key: str, signature: str, message: str) -> bool:
-    # todo
-    return True
+    vk = VerifyingKey.from_string(bytes.fromhex(public_key), curve=SECP256k1)
+    message_hash = hashlib.sha256(message.encode('utf-8')).digest()
+    try:
+        vk.verify(base64.b64decode(signature), message_hash)
+        return True
+    except BadSignatureError:
+        return False
 
 class PoPService:
     """Proof of purchase"""
