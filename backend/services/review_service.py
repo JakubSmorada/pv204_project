@@ -20,10 +20,7 @@ class ReviewService:
             raise ValueError("Rating must be an integer between 1 and 5")
         
         review = {
-            "transaction_id": review_data.transaction_id,
             "seller_pubkey": pop.seller_pubkey,
-            "rating": review_data.rating,
-            "comment": review_data.comment,
             "verified": True
         }
         
@@ -33,7 +30,9 @@ class ReviewService:
         return ReviewResponse(**review)
     
     async def get_reviews_for_seller(self, seller_pubkey: str) -> List[ReviewResponse]:
-        cursor = mongodb.reviews.find({"seller_pubkey": seller_pubkey, "verified": True})
+        collection = mongodb.db["reviews"]
+        cursor = collection.find({"seller_pubkey": seller_pubkey, "verified": True})
+
         reviews = await cursor.to_list(length=8)
         return [ReviewResponse(**review) for review in reviews]
     

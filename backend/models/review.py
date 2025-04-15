@@ -6,8 +6,8 @@ class ReviewCreate(BaseModel):
     comment: str
 
 class ReviewResponse(BaseModel):
-    transaction_id: str
     seller_pubkey: str
     rating: int
     comment: str
+    transaction_id: str
     verified: bool
