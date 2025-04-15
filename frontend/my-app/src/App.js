@@ -5,6 +5,7 @@ import ProtectedRoute from './ProtectedRoute';
 import NostrAuth from './NostrAuth';
 import HomePage from './Home';
 import AllListings from './AllListings';
+import AllSellers from './AllSellers';
 import MyListings from './MyListings';
 import CreateListing from './CreateListing';
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/listings/create" element={<ProtectedRoute element={<CreateListing />} />} />
           <Route path="/listings/all" element={<ProtectedRoute element={<AllListings />} />} />
           <Route path="/listings/mine" element={<ProtectedRoute element={<MyListings />} />} />
+          <Route path="/sellers/all" element={<ProtectedRoute element={<AllSellers />} />} />
           <Route path="/" element={<Navigate to="/home" />} />
           <Route path="*" element={<Navigate to="/home" />} />
         </Routes>
