@@ -42,18 +42,15 @@ const CreateListing = () => {
     'This is an example description that meets the minimum requirement. Feel free to change it as needed.'
   );
   const [condition, setCondition] = useState('new');
-  const [categoryId, setCategoryId] = useState(1);
   const [price, setPrice] = useState(10); // Price as integer
-  const [quantity, setQuantity] = useState(1);
-  const [shippingPrice, setShippingPrice] = useState(0); // Shipping price as integer
-  const [tags, setTags] = useState('example, test');
-  const [images, setImages] = useState('https://example.com/image1.jpg');
+  const [image, setImage] = useState('https://example.com/image1.jpg');
 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Retrieve the user’s token from localStorage (or your AuthContext)
   const token = localStorage.getItem('authToken') || '';
+  const pubkey = localStorage.getItem('userPublicKey');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,17 +62,14 @@ const CreateListing = () => {
       title,
       description,
       condition,
-      category_id: Number(categoryId),
-      price: Number(price),                  // Now an integer
-      quantity: Number(quantity),
-      shipping_price: Number(shippingPrice), // Now an integer
-      tags: tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      images: images.split(',').map(url => url.trim()).filter(Boolean),
+      price: Number(price),                  
+      image,
+      pubkey
     };
 
     try {
       // Compute a valid nonce that makes the hash start with "0000"
-      const { nonce, hash } = await computeProofOfWork(basePayload, 6);
+      const { nonce, hash } = await computeProofOfWork(basePayload, 4);
       setMessage(`Proof-of-work successful! Nonce: ${nonce} - Hash: ${hash}`);
       
       // Append the nonce to the payload
@@ -156,17 +150,6 @@ const CreateListing = () => {
         </div>
         <div style={{ marginBottom: '10px' }}>
           <label>
-            Category ID:&nbsp;
-            <input
-              type="number"
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>
             Price:&nbsp;
             <input
               type="number"
@@ -178,43 +161,11 @@ const CreateListing = () => {
         </div>
         <div style={{ marginBottom: '10px' }}>
           <label>
-            Quantity:&nbsp;
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>
-            Shipping Price:&nbsp;
-            <input
-              type="number"
-              value={shippingPrice}
-              onChange={(e) => setShippingPrice(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>
-            Tags (comma separated):&nbsp;
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-            />
-          </label>
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>
             Images (comma separated URLs):&nbsp;
             <input
               type="text"
-              value={images}
-              onChange={(e) => setImages(e.target.value)}
+              value={image}
+              onChange={(e) => setImage(e.target.value)}
               required
             />
           </label>

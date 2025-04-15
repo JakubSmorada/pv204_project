@@ -151,65 +151,65 @@ async def get_my_nostr_profile(user: dict = Depends(get_current_user)):
     return await get_nostr_profile(public_key)
 
 
-@router.post("/verify-profile-creation", status_code=status.HTTP_200_OK)
-async def verify_profile_creation(request: LoginRequest):
-    """
-    Verify if a profile was created for a given private key
-
-    This endpoint is useful for testing and debugging Nostr profile creation
-    """
-    try:
-        # Parse the private key
-        keys = Keys.parse(request.private_key)
-        public_key = keys.public_key().to_bech32()
-
-        # Try first with WebSocket finder - use correct parameter name
-        profile = await websocket_finder.find_profile(public_key, timeout=5)
-
-        # If that fails, try with nostr_service
-        if not profile:
-            profile = await nostr_service.find_profile(public_key, timeout_secs=5)
-
-        if profile:
-            # Profile found on network
-            return {
-                "success": True,
-                "message": "Profile found on Nostr network",
-                "public_key": public_key,
-                "profile": profile,
-                "event_id": profile.get("_event_id"),
-                "event_kind": "0 (METADATA)",
-                "source": "network"
-            }
-
-        # Check if we have the user in our database
-        user = await user_service.get_user_by_public_key(public_key)
-        if user and user.get("nostr_profile_event_id"):
-            return {
-                "success": True,
-                "message": "Profile created but not found on network",
-                "public_key": public_key,
-                "event_id": user.get("nostr_profile_event_id"),
-                "database_profile": {
-                    "username": user.get("username"),
-                    "display_name": user.get("display_name"),
-                    "about": user.get("about"),
-                    "picture": user.get("picture"),
-                    "lightning": user.get("lightning_address")
-                },
-                "source": "database"
-            }
-
-        # No profile found
-        return {
-            "success": False,
-            "message": "No profile found for this key",
-            "public_key": public_key,
-            "source": "unknown"
-        }
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error verifying profile: {str(e)}"
-        )
+# @router.post("/verify-profile-creation", status_code=status.HTTP_200_OK)
+# async def verify_profile_creation(request: LoginRequest):
+#     """
+#     Verify if a profile was created for a given private key
+#
+#     This endpoint is useful for testing and debugging Nostr profile creation
+#     """
+#     try:
+#         # Parse the private key
+#         keys = Keys.parse(request.private_key)
+#         public_key = keys.public_key().to_bech32()
+#
+#         # Try first with WebSocket finder - use correct parameter name
+#         profile = await websocket_finder.find_profile(public_key, timeout=5)
+#
+#         # If that fails, try with nostr_service
+#         if not profile:
+#             profile = await nostr_service.find_profile(public_key, timeout_secs=5)
+#
+#         if profile:
+#             # Profile found on network
+#             return {
+#                 "success": True,
+#                 "message": "Profile found on Nostr network",
+#                 "public_key": public_key,
+#                 "profile": profile,
+#                 "event_id": profile.get("_event_id"),
+#                 "event_kind": "0 (METADATA)",
+#                 "source": "network"
+#             }
+#
+#         # Check if we have the user in our database
+#         user = await user_service.get_user_by_public_key(public_key)
+#         if user and user.get("nostr_profile_event_id"):
+#             return {
+#                 "success": True,
+#                 "message": "Profile created but not found on network",
+#                 "public_key": public_key,
+#                 "event_id": user.get("nostr_profile_event_id"),
+#                 "database_profile": {
+#                     "username": user.get("username"),
+#                     "display_name": user.get("display_name"),
+#                     "about": user.get("about"),
+#                     "picture": user.get("picture"),
+#                     "lightning": user.get("lightning_address")
+#                 },
+#                 "source": "database"
+#             }
+#
+#         # No profile found
+#         return {
+#             "success": False,
+#             "message": "No profile found for this key",
+#             "public_key": public_key,
+#             "source": "unknown"
+#         }
+#
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail=f"Error verifying profile: {str(e)}"
+#         )

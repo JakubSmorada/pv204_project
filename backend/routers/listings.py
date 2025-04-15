@@ -15,15 +15,13 @@ router = APIRouter(
 @router.post("/", response_model=ListingResponse)
 async def create_listing(
     listing: ListingCreate,
-    current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
     Create a new listing with proof-of-work.
     Expects a valid session token (provided in the query parameter) and requires a nonce in the JSON body.
     """
-    seller_id = UUID(current_user["id"]) if "id" in current_user else uuid4()
     try:
-        result = await listing_service.create_listing(listing, seller_id)
+        result = await listing_service.create_listing(listing)
         return result
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Error creating listing: {str(e)}")
@@ -40,6 +38,16 @@ async def get_all_listings():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving listings: {str(e)}")
 
+@router.get("/{public_key}", response_model=List[ListingResponse])
+async def get_listings_by_pubkey(public_key: str):
+    """
+    Return all listings for a specific public key.
+    """
+    try:
+        results = await listing_service.get_listings_by_pubkey(public_key)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving listings: {str(e)}")
 
 
 @router.get("/{listing_id}", response_model=ListingResponse)
@@ -86,14 +94,14 @@ async def delete_listing(listing_id: str):
     return None
 
 
-@router.post("/{listing_id}/sync", status_code=200)
-async def sync_with_nostr(listing_id: str):
-    """
-    Force sync a listing with Nostr network
-    """
-    success = await listing_service.sync_with_nostr(listing_id)
-
-    if not success:
-        raise HTTPException(status_code=404, detail="Listing not found or sync failed")
-
-    return {"status": "success", "message": "Listing synced with Nostr network"}
+# @router.post("/{listing_id}/sync", status_code=200)
+# async def sync_with_nostr(listing_id: str):
+#     """
+#     Force sync a listing with Nostr network
+#     """
+#     success = await listing_service.sync_with_nostr(listing_id)
+#
+#     if not success:
+#         raise HTTPException(status_code=404, detail="Listing not found or sync failed")
+#
+#     return {"status": "success", "message": "Listing synced with Nostr network"}

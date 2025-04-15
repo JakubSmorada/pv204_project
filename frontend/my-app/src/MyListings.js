@@ -10,22 +10,22 @@ const MyListings = () => {
   // Get current user's public key from AuthContext
   const { userPublicKey } = useContext(AuthContext);
 
-  // Fetch all listings and filter them for the logged-in user
+  // Fetch listings for the logged-in user using the new endpoint
   useEffect(() => {
-    const fetchListings = async () => {
+    if (!userPublicKey) {
+      setError('No public key available.');
+      setLoading(false);
+      return;
+    }
+    
+    const fetchMyListings = async () => {
       try {
-        const response = await fetch('http://localhost:8000/listings');
+        const response = await fetch(`http://localhost:8000/listings/${encodeURIComponent(userPublicKey)}`);
         if (!response.ok) {
           throw new Error('Error fetching listings');
         }
         const data = await response.json();
-        // Filter listings by comparing seller info with the logged-in user's public key
-        const myListings = data.filter(listing => 
-          userPublicKey &&
-          listing.seller &&
-          listing.seller.nostr_public_key === userPublicKey
-        );
-        setListings(myListings);
+        setListings(data);
         setLoading(false);
       } catch (err) {
         setError(err.message);
@@ -33,10 +33,10 @@ const MyListings = () => {
       }
     };
 
-    fetchListings();
+    fetchMyListings();
   }, [userPublicKey]);
 
-  // Open modal with detailed info
+  // Open modal with detailed listing info
   const openModal = (listing) => {
     setSelectedListing(listing);
   };
@@ -53,7 +53,7 @@ const MyListings = () => {
       {error && <p style={{ color: 'red' }}>Error: {error}</p>}
       {(!loading && listings.length === 0) && <p>No listings found for you.</p>}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
-        {listings.map(listing => (
+        {listings.map((listing) => (
           <div
             key={listing.id}
             onClick={() => openModal(listing)}
@@ -66,9 +66,10 @@ const MyListings = () => {
               boxShadow: '2px 2px 5px rgba(0,0,0,0.1)'
             }}
           >
-            {listing.images && listing.images.length > 0 && (
+            {/* Display image if available */}
+            {listing.image && listing.image.url && (
               <img
-                src={listing.images[0].url}
+                src={listing.image.url}
                 alt="Listing"
                 style={{ width: '100%', borderRadius: '4px', marginBottom: '8px' }}
               />
@@ -80,10 +81,10 @@ const MyListings = () => {
         ))}
       </div>
 
-      {/* Modal for listing details */}
+      {/* Modal for showing listing details */}
       {selectedListing && (
         <div
-          onClick={closeModal}  // Clicking on the overlay will close the modal
+          onClick={closeModal}  // Clicking outside modal content closes modal
           style={{
             position: 'fixed',
             top: 0,
@@ -97,7 +98,7 @@ const MyListings = () => {
           }}
         >
           <div
-            onClick={(e) => e.stopPropagation()} // Prevent clicks inside the modal from closing it
+            onClick={(e) => e.stopPropagation()}  // Prevent closing when clicking inside
             style={{
               background: '#fff',
               padding: '20px',
@@ -122,9 +123,9 @@ const MyListings = () => {
             >
               &times;
             </button>
-            {selectedListing.images && selectedListing.images.length > 0 && (
+            {selectedListing.image && selectedListing.image.url && (
               <img
-                src={selectedListing.images[0].url}
+                src={selectedListing.image.url}
                 alt="Listing"
                 style={{ width: '100%', borderRadius: '4px', marginBottom: '16px' }}
               />
@@ -133,9 +134,12 @@ const MyListings = () => {
             <p><strong>Price:</strong> ${selectedListing.price}</p>
             <p><strong>Description:</strong> {selectedListing.description}</p>
             <p><strong>Condition:</strong> {selectedListing.condition}</p>
-            <p><strong>Category ID:</strong> {selectedListing.category_id}</p>
-            <p><strong>Quantity:</strong> {selectedListing.quantity}</p>
-            <p><strong>Shipping Price:</strong> ${selectedListing.shipping_price}</p>
+            {/* Render additional fields if available */}
+            {selectedListing.category_id && <p><strong>Category ID:</strong> {selectedListing.category_id}</p>}
+            {selectedListing.quantity && <p><strong>Quantity:</strong> {selectedListing.quantity}</p>}
+            {selectedListing.shipping_price !== undefined && (
+              <p><strong>Shipping Price:</strong> ${selectedListing.shipping_price}</p>
+            )}
             {selectedListing.tags && selectedListing.tags.length > 0 && (
               <p><strong>Tags:</strong> {selectedListing.tags.join(', ')}</p>
             )}

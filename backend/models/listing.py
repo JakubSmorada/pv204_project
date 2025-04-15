@@ -18,53 +18,26 @@ class ListingStatus(str, Enum):
 
 class Image(BaseModel):
     url: HttpUrl
-    is_primary: bool = False
-    description: Optional[str] = None
-
-class SellerInfo(BaseModel):
-    nostr_public_key: str
-    name: Optional[str] = None
-    about: Optional[str] = None
-    picture: Optional[str] = None
-
-    @validator('nostr_public_key')
-    def check_pubkey(cls, v):
-        if not v.startswith("npub"):
-            raise ValueError("Invalid Nostr public key (should start with 'npub')")
-        return v
 
 class ListingBase(BaseModel):
     title: str = Field(..., min_length=3, max_length=80)
     description: str = Field(..., min_length=20, max_length=5000)
     condition: ListingCondition
-    category_id: int
-    price: int = Field(gt=0)  # Changed from float to int
-    quantity: int = Field(ge=1, default=1)
-    shipping_price: int = Field(ge=0)  # Changed from float to int
-    tags: List[str] = []
-
-    @validator('tags')
-    def validate_tags(cls, v):
-        if len(v) > 20:
-            raise ValueError('Maximum 20 tags allowed')
-        return v
+    price: int = Field(gt=0)
+    pubkey: str
 
 class ListingCreate(ListingBase):
-    images: List[HttpUrl] = Field(..., min_items=1, max_items=12)
+    image: HttpUrl
     nonce: Optional[int] = Field(..., description="Proof-of-work nonce")  # PoW nonce required
 
 class ListingInDB(ListingBase):
     id: str
-    seller_id: str
-    images: List[Image]
+    image: Image
     created_at: datetime
     updated_at: datetime
     status: ListingStatus = ListingStatus.ACTIVE
-    views_count: int = 0
-    favorite_count: int = 0
-    category: Optional[str] = None
-    seller: Optional[SellerInfo] = None
     nostr_event_id: Optional[str] = None
+    paid_by: Optional[str] = None
 
     class Config:
         orm_mode = True

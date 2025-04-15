@@ -82,47 +82,51 @@ class ListingService:
             listings.append(self._deserialize_listing(listing))
         return listings
 
-    async def create_listing(self, listing_data: ListingCreate, seller_id: UUID) -> ListingInDB:
+    async def get_listings_by_pubkey(self, pubkey: str) -> List[Dict[Any, Any]]:
+        """
+        Return all listings that were created by the specified public key.
+        """
+        print(pubkey)
+        collection = mongodb.db[self.collection_name]
+        cursor = collection.find({"pubkey": pubkey})
+        listings = []
+        async for listing in cursor:
+            listings.append(self._deserialize_listing(listing))
+        return listings
+
+    async def create_listing(self, listing_data: ListingCreate) -> ListingInDB:
         """
         Create a new listing in MongoDB and publish to Nostr.
-        Now also validates the proof-of-work nonce.
+        Validates the proof-of-work nonce.
         """
-        # Convert to dict for easier manipulation
         listing_dict = listing_data.dict()
+        print(listing_dict)
 
         # Validate Proof-of-Work
         if "nonce" not in listing_dict:
             raise Exception("Nonce not provided for proof of work.")
         nonce = listing_dict["nonce"]
-        is_valid, computed_hash = self.validate_proof_of_work(listing_dict, nonce, difficulty=6)
+        is_valid, computed_hash = self.validate_proof_of_work(listing_dict, nonce, difficulty=4)
         if not is_valid:
             raise Exception(f"Invalid proof of work. Computed hash: {computed_hash} does not meet difficulty.")
 
-        # Proceed with additional fields
+        # Populate additional fields.
         listing_dict["id"] = str(uuid4())
-        listing_dict["seller_id"] = str(seller_id)
         listing_dict["created_at"] = datetime.utcnow()
         listing_dict["updated_at"] = datetime.utcnow()
         listing_dict["status"] = "active"
-        listing_dict["views_count"] = 0
-        listing_dict["favorite_count"] = 0
+        listing_dict["image"] = {"url": str(listing_dict["image"])}
 
-        # Convert image URLs to Image objects with string URLs
-        listing_dict["images"] = [
-            {"url": str(url), "is_primary": idx == 0}
-            for idx, url in enumerate(listing_dict["images"])
-        ]
-
-        # Prepare for MongoDB insertion
+        # Prepare the document for MongoDB insertion.
         mongo_listing = self._serialize_listing(listing_dict)
         mongo_listing["_id"] = str(listing_dict["id"])
 
-        # Publish to Nostr (unchanged)
+        # Publish to Nostr
         try:
             title = listing_dict.get("title", "Untitled Listing")
             price = listing_dict.get("price", 0)
             condition = listing_dict.get("condition", "unknown")
-            content = f"📦 {title}\nPrice: ${price}\nCondition: {condition}\n\n{listing_dict.get('description', '')}"
+            content = f"📦 {title}\nPrice: {price}\nCondition: {condition}\n\n{listing_dict.get('description', '')}"
             tags = [
                 Tag.custom(cast(TagKind, TagKind.TITLE()), [title]),
                 Tag.custom(cast(TagKind, TagKind.AMOUNT()), [str(price)]),
@@ -130,14 +134,10 @@ class ListingService:
             ]
             nostr_result = await nostr_service.publish_event(content, tags)
             mongo_listing["nostr_event_id"] = nostr_result["event_id"]
-            mongo_listing["nostr_identifier"] = nostr_result["identifier"]
-            mongo_listing["nostr_event_history"] = []
-            listing_dict["nostr_event_id"] = nostr_result["event_id"]
-            listing_dict["nostr_identifier"] = nostr_result["identifier"]
-            listing_dict["nostr_event_history"] = []
+            listing_dict["nostr_event_id"] = nostr_result.get("event_id")
         except Exception as e:
             print(f"Error publishing to Nostr: {e}")
-            # Continue anyway
+            # Continue even if Nostr publishing fails
 
         collection = mongodb.db[self.collection_name]
         await collection.insert_one(mongo_listing)
