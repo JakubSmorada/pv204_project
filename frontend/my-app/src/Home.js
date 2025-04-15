@@ -7,7 +7,6 @@ const HomePage = () => {
   const handleCreateListing = () => navigate('/listings/create');
   const handleMyListings = () => navigate('/listings/mine');
   const handleAllListings = () => navigate('/listings/all');
-  const handleAllSellers = () => navigate('/sellers/all');
   const handleInvoices= () => navigate('/invoices');
   const handleAllSellers = () => navigate('/sellers/all');
 
