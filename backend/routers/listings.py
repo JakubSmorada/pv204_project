@@ -79,29 +79,3 @@ async def update_listing(listing_id: str, listing_update: ListingUpdate):
         raise HTTPException(status_code=404, detail="Listing not found")
 
     return updated_listing
-
-
-@router.delete("/{listing_id}", status_code=204)
-async def delete_listing(listing_id: str):
-    """
-    Delete a listing
-    """
-    success = await listing_service.delete_listing(listing_id)
-
-    if not success:
-        raise HTTPException(status_code=404, detail="Listing not found")
-
-    return None
-
-
-# @router.post("/{listing_id}/sync", status_code=200)
-# async def sync_with_nostr(listing_id: str):
-#     """
-#     Force sync a listing with Nostr network
-#     """
-#     success = await listing_service.sync_with_nostr(listing_id)
-#
-#     if not success:
-#         raise HTTPException(status_code=404, detail="Listing not found or sync failed")
-#
-#     return {"status": "success", "message": "Listing synced with Nostr network"}

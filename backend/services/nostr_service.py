@@ -143,49 +143,6 @@ class NostrService:
                 "identifier": ""
             }
 
-    async def create_profile(self, private_key, name):
-        await self.ensure_connected(custom_private_key=private_key)# temporarily connect with user's private key
-
-        try:
-            # Create profile metadata
-            profile = {
-                "name": name,
-            }
-
-            content = json.dumps(profile)
-
-            kind = Kind(0)
-            builder = EventBuilder(kind, content)
-            print(f"DEBUG: Created EventBuilder with Kind 0")
-
-            event = await builder.sign(self.signer)
-            print(f"DEBUG: Event signed successfully")
-
-            kind_value = event.kind().as_u16()
-            print(f"DEBUG: Event kind value: {kind_value}")
-
-            await self.client.send_event(event)
-            print(f"DEBUG: Event sent to relays")
-
-            event_id = event.id().to_hex()
-            unique_id = self._generate_unique_id()
-
-            result = {
-                "event_id": event_id,
-                "identifier": unique_id
-            }
-            print(f"DEBUG: Profile creation successful with event ID: {event_id}")
-        except Exception as e:
-            print(f"ERROR creating profile: {str(e)}")
-            result = {
-                "event_id": f"nostr-error-{str(e)}",
-                "identifier": ""
-            }
-        await self.close()
-        self.is_connected = False
-
-        return result
-
     
     async def publish_update(self,
                              content: str,

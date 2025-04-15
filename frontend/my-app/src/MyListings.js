@@ -10,7 +10,7 @@ const MyListings = () => {
   // Get current user's public key from AuthContext
   const { userPublicKey } = useContext(AuthContext);
 
-  // Fetch listings for the logged-in user using the new endpoint
+  // Fetch listings for the logged-in user using the endpoint that returns only their listings.
   useEffect(() => {
     if (!userPublicKey) {
       setError('No public key available.');
@@ -20,6 +20,7 @@ const MyListings = () => {
     
     const fetchMyListings = async () => {
       try {
+        // Adjust the endpoint as needed; here we assume /listings/{public_key} returns the user's listings.
         const response = await fetch(`http://localhost:8000/listings/${encodeURIComponent(userPublicKey)}`);
         if (!response.ok) {
           throw new Error('Error fetching listings');
@@ -63,10 +64,10 @@ const MyListings = () => {
               padding: '16px',
               width: '300px',
               cursor: 'pointer',
-              boxShadow: '2px 2px 5px rgba(0,0,0,0.1)'
+              boxShadow: '2px 2px 5px rgba(0,0,0,0.1)',
+              background: listing.status === "ended" ? "#ffd6d6" : "#fff"
             }}
           >
-            {/* Display image if available */}
             {listing.image && listing.image.url && (
               <img
                 src={listing.image.url}
@@ -76,7 +77,7 @@ const MyListings = () => {
             )}
             <h3>{listing.title}</h3>
             <p style={{ fontWeight: 'bold' }}>${listing.price}</p>
-            <p>{listing.description.substring(0, 100)}...</p>
+            <p>{(listing.description || "").substring(0, 100)}...</p>
           </div>
         ))}
       </div>
@@ -84,7 +85,7 @@ const MyListings = () => {
       {/* Modal for showing listing details */}
       {selectedListing && (
         <div
-          onClick={closeModal}  // Clicking outside modal content closes modal
+          onClick={closeModal}
           style={{
             position: 'fixed',
             top: 0,
@@ -98,7 +99,7 @@ const MyListings = () => {
           }}
         >
           <div
-            onClick={(e) => e.stopPropagation()}  // Prevent closing when clicking inside
+            onClick={(e) => e.stopPropagation()}
             style={{
               background: '#fff',
               padding: '20px',
@@ -131,17 +132,26 @@ const MyListings = () => {
               />
             )}
             <h2>{selectedListing.title}</h2>
-            <p><strong>Price:</strong> ${selectedListing.price}</p>
+            <p><strong>Price:</strong> {selectedListing.price} SATs</p>
             <p><strong>Description:</strong> {selectedListing.description}</p>
             <p><strong>Condition:</strong> {selectedListing.condition}</p>
-            {/* Render additional fields if available */}
-            {selectedListing.category_id && <p><strong>Category ID:</strong> {selectedListing.category_id}</p>}
-            {selectedListing.quantity && <p><strong>Quantity:</strong> {selectedListing.quantity}</p>}
-            {selectedListing.shipping_price !== undefined && (
-              <p><strong>Shipping Price:</strong> ${selectedListing.shipping_price}</p>
+            {/* If the listing is ended, display paid_by information */}
+            {selectedListing.status === "ended" && selectedListing.paid_by && (
+              <p style={{ color: "green" }}>
+                <strong>Paid by:</strong> {selectedListing.paid_by}
+              </p>
             )}
-            {selectedListing.tags && selectedListing.tags.length > 0 && (
-              <p><strong>Tags:</strong> {selectedListing.tags.join(', ')}</p>
+            {/* Only show the pay button if the listing status is not ended */}
+            {selectedListing.status !== "ended" && (
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                <button onClick={() => {
+                  // You could navigate to a payment flow here or open another modal
+                  // For now, we simply alert:
+                  alert(`Payment functionality here for listing: ${selectedListing.title}`);
+                }}>
+                  Pay
+                </button>
+              </div>
             )}
           </div>
         </div>

@@ -49,14 +49,6 @@ class ListingUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=3, max_length=80)
     description: Optional[str] = Field(None, min_length=20, max_length=5000)
     condition: Optional[ListingCondition] = None
-    category_id: Optional[int] = None
     price: Optional[int] = Field(None, gt=0)  # Changed to int
-    quantity: Optional[int] = Field(None, ge=1)
     status: Optional[ListingStatus] = None
-    tags: Optional[List[str]] = None
-
-    @validator('tags')
-    def validate_tags(cls, v):
-        if v is not None and len(v) > 20:
-            raise ValueError('Maximum 20 tags allowed')
-        return v
+    paid_by: Optional[str] = None
